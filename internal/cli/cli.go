@@ -52,7 +52,7 @@ func performAuthenticatedLongPolling() error {
 	// Start a goroutine to handle long polling
 	go func() {
 		for {
-			//Construct url
+			// Construct url
 			parsedURL, err := url.Parse(httpApiUrl)
 			if err != nil {
 				fmt.Println("Error parsing URL:", err)
@@ -67,7 +67,7 @@ func performAuthenticatedLongPolling() error {
 
 			fmt.Println("LongPollUrl:", longPollUrl)
 
-			//Define request
+			// Define request
 			req, err := http.NewRequest("GET", longPollUrl, nil)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error creating long-polling request: %v\n", err)
@@ -103,9 +103,8 @@ func performAuthenticatedLongPolling() error {
 				fmt.Println("error:", err)
 			}
 
-			//update next etag
+			// Update next etag
 			etag = poolsDefault.Etag
-
 			notificationCh <- poolsDefault
 		}
 	}()
