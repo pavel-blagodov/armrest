@@ -1,4 +1,4 @@
-package types
+package app
 
 type PoolsDefault struct {
 	Etag                   string                 `json:"etag"`

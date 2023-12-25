@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pavel-blagodov/armrest/internal/cli"
+	"github.com/pavel-blagodov/armrest/cmd/armrest/app"
 )
 
 func main() {
-	if err := cli.Execute(); err != nil {
+	err := app.NewRootCommand().Execute()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
