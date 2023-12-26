@@ -76,11 +76,9 @@ func poolsDefaultPoller(flags *rootFlags) (func(), chan PoolsDefault, error) {
 			select {
 			// Prepare next request
 			case ch <- poolsDefault:
-				fmt.Println("poll")
 				etag = poolsDefault.Etag
 			// Stop loop and request
 			case <-ch:
-				fmt.Println("cancel")
 				cancel()
 				return
 			}
