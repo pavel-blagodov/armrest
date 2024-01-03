@@ -40,7 +40,7 @@ const nodesContainerID = "nodes"
 func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 
-		poolDefaultStart, poolDefaultChannel, err := poolsDefaultPoller(flags)
+		poolDefaultStart, _, poolDefaultChannel, err := poolsDefaultPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}

@@ -84,6 +84,9 @@ func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Cont
 			}
 
 			gridOpts, err := newNodesLayout(nodesWidgets, poolsDefault) // equivalent to contLayout(w)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error new layout: %v\n", err)
+			}
 
 			for i, node := range poolsDefault.Nodes {
 				values := []int{getCpuUsage(node), getRamUsage(node), getSwapUsage(node)}
