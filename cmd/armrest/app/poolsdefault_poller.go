@@ -2,12 +2,10 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 )
 
 func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, error) {
-
 	// Set up a channel to receive response
 	ch := make(chan PoolsDefault)
 	var cancel context.CancelFunc
@@ -18,16 +16,8 @@ func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, er
 
 	// Start a goroutine to handle long polling
 	start := func() {
-		var etag = ""
-
+		var etag string
 		for {
-			// Construct url
-			parsedURL, err := url.Parse(flags.cbServerAPI)
-			if err != nil {
-				fmt.Println("Error parsing URL:", err)
-				return
-			}
-			parsedURL.Path = "/pools/default"
 			queryParams := url.Values{}
 			queryParams.Add("etag", etag)
 			queryParams.Add("waitChange", "10000")
@@ -35,14 +25,18 @@ func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, er
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			resp, err := request[PoolsDefault](Request{
-				url:      parsedURL.String(),
+			resp, err := request[PoolsDefault](ctx, Request{
 				method:   "GET",
+				base:     flags.cbServerAPI,
+				path:     "/pools/default",
+				query:    queryParams,
 				username: flags.username,
 				password: flags.password,
-				query:    queryParams,
-				ctx:      ctx,
 			})
+
+			if err != nil {
+				return
+			}
 
 			select {
 			// Prepare next request

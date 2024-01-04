@@ -12,20 +12,21 @@ import (
 )
 
 type Request struct {
-	url      string
+	base     string
+	path     string
 	method   string
 	username string
 	password string
 	query    url.Values
-	ctx      context.Context
 }
 
-func request[T any](request Request) (T, error) {
-	var RV T
+func request[T any](ctx context.Context, request Request) (T, error) {
+	var rv T
 	client := http.Client{}
-	u, err := url.Parse(request.url)
+	u, err := url.Parse(request.base)
 	if err != nil {
-		return RV, err
+		fmt.Fprintf(os.Stderr, "Error parsing base URL: %v\n", err)
+		return rv, err
 	}
 
 	// if it's a GET, we need to append the query parameters.
@@ -37,11 +38,13 @@ func request[T any](request Request) (T, error) {
 		u.RawQuery = q.Encode()
 	}
 
+	u.Path = request.path
+
 	// Define request
-	req, err := http.NewRequestWithContext(request.ctx, request.method, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, request.method, u.String(), nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating long-polling request: %v\n", err)
-		return RV, err
+		return rv, err
 	}
 	req.SetBasicAuth(request.username, request.password)
 
@@ -49,7 +52,7 @@ func request[T any](request Request) (T, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error making long-polling request: %v\n", err)
-		return RV, err
+		return rv, err
 	}
 	defer resp.Body.Close()
 
@@ -57,20 +60,20 @@ func request[T any](request Request) (T, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-		return RV, err
+		return rv, err
 	}
 
 	// Check the HTTP status code
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("Error: Unexpected status code %d\n", resp.StatusCode)
-		return RV, err
+		return rv, err
 	}
 
 	// Unmarshal JSON data into a struct
-	json.Unmarshal(body, &RV)
+	json.Unmarshal(body, &rv)
 	if err != nil {
 		fmt.Println("Error Unmarshal data", err)
 	}
 
-	return RV, err
+	return rv, err
 }

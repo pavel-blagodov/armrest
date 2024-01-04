@@ -70,12 +70,23 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		go poolDefaultStart()
+		resp, err := request[Pools](ctx, Request{
+			base:     flags.cbServerAPI,
+			path:     "/pools",
+			method:   "GET",
+			username: flags.username,
+			password: flags.password,
+		})
+
+		if resp.IsEnterprise == true {
+			go poolDefaultStart()
+		}
 
 		go updateNodesLayout(ctx, t, rootContainer, poolDefaultChannel)
 
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
 		}
+
 	}
 }
