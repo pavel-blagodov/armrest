@@ -35,7 +35,8 @@ func NewRootCommand() *cobra.Command {
 }
 
 const rootContainerID = "root"
-const nodesContainerID = "nodes"
+const nodesSystemStatsContainerID = "nodesSystemStats"
+const nodesCountContainerID = "nodesCountStats"
 
 func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
@@ -54,8 +55,8 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 		rootContainer, err := container.New(t,
 			container.ID(rootContainerID),
 			container.SplitVertical(
-				container.Left(container.ID(nodesContainerID)),
-				container.Right(),
+				container.Left(container.ID(nodesSystemStatsContainerID)),
+				container.Right(container.ID(nodesCountContainerID)),
 			),
 		)
 		if err != nil {
@@ -70,17 +71,15 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		resp, err := request[Pools](ctx, Request{
-			base:     flags.cbServerAPI,
-			path:     "/pools",
-			method:   "GET",
-			username: flags.username,
-			password: flags.password,
-		})
+		// poolsResp, err := request[Pools](ctx, Request{
+		// 	base:     flags.cbServerAPI,
+		// 	path:     "/pools",
+		// 	method:   "GET",
+		// 	username: flags.username,
+		// 	password: flags.password,
+		// })
 
-		if resp.IsEnterprise == true {
-			go poolDefaultStart()
-		}
+		go poolDefaultStart()
 
 		go updateNodesLayout(ctx, t, rootContainer, poolDefaultChannel)
 

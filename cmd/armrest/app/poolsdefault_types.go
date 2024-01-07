@@ -12,7 +12,7 @@ type PoolsDefault struct {
 	MaxBucketCount         int                    `json:"maxBucketCount"`
 	Name                   string                 `json:"name"`
 	NodeStatusesURI        string                 `json:"nodeStatusesUri"`
-	Nodes                  []Nodes                `json:"nodes"`
+	Nodes                  []Node                 `json:"nodes"`
 	RebalanceProgressURI   string                 `json:"rebalanceProgressUri"`
 	RebalanceStatus        string                 `json:"rebalanceStatus"`
 	RemoteClusters         RemoteClusters         `json:"remoteClusters"`
@@ -129,7 +129,7 @@ type SystemStats struct {
 	SwapTotal          int64   `json:"swap_total"`
 	SwapUsed           int     `json:"swap_used"`
 }
-type Nodes struct {
+type Node struct {
 	ClusterCompatibility int              `json:"clusterCompatibility"`
 	ClusterMembership    string           `json:"clusterMembership"`
 	CouchAPIBase         string           `json:"couchApiBase"`
