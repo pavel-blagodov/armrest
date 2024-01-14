@@ -7,7 +7,7 @@ import (
 
 func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, error) {
 	// Set up a channel to receive response
-	ch := make(chan PoolsDefault)
+	ch := make(chan PoolsDefault, 1)
 	var cancel context.CancelFunc
 
 	stop := func() {

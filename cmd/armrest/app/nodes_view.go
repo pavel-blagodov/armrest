@@ -73,11 +73,10 @@ func newNodesSystemsStatsWidgets(ctx context.Context, poolsDefault PoolsDefault)
 	return rv, nil
 }
 
-func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container, pdChannel chan PoolsDefault) {
+func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container, pdChannel <-chan PoolsDefault) {
 	for {
 		select {
 		case poolsDefault := <-pdChannel:
-
 			//nodes system stats
 			nodesSystemsStatsWidgets, err := newNodesSystemsStatsWidgets(ctx, poolsDefault)
 			if err != nil {

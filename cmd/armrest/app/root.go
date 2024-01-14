@@ -103,8 +103,6 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 		// 	password: flags.password,
 		// })
 
-		go poolDefaultStart()
-
 		buttons, err := newLayoutButtons(rootContainer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating buttons: %v\n", err)
@@ -116,10 +114,11 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 
 		go updateNodesLayout(ctx, t, rootContainer, poolDefaultChannel)
 
+		go poolDefaultStart()
+
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
 		}
-
 	}
 }
 
