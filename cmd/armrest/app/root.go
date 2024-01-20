@@ -38,54 +38,13 @@ func NewRootCommand() *cobra.Command {
 	return cmd
 }
 
-const rootContainerID = "root"
-const nodesSystemStatsContainerID = "nodesSystemStats"
-const nodesCountContainerID = "nodesCountContainerID"
-const layoutSpecificContainerID = "layoutSpecificContainerID"
-const layoutButtonsContainerID = "layoutButtonsContainerID"
-const logsContainerID = "logsContainerID"
-
 func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-
-		poolDefaultStart, _, poolDefaultChannel, err := poolsDefaultPoller(flags)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
-		}
-
 		t, err := tcell.New(tcell.ColorMode(terminalapi.ColorMode256))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error tcell: %v\n", err)
 		}
 		defer t.Close()
-
-		rootContainer, err := container.New(t,
-			container.ID(rootContainerID),
-			container.SplitVertical(
-				container.Left(
-					container.SplitHorizontal(
-						container.Top(
-							container.Border(linestyle.Light),
-							container.BorderTitle("Press Q to quit"),
-							container.ID(nodesCountContainerID),
-						),
-						container.Bottom(
-							container.SplitHorizontal(
-								container.Top(container.ID(layoutButtonsContainerID)),
-								container.Bottom(container.ID(layoutSpecificContainerID)),
-								container.SplitPercent(20),
-							),
-						),
-						container.SplitPercent(30),
-					),
-				),
-				container.Right(container.ID(logsContainerID)),
-				container.SplitPercent(70),
-			),
-		)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error new container: %v\n", err)
-		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -95,20 +54,28 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		// poolsResp, err := request[Pools](ctx, Request{
-		// 	base:     flags.cbServerAPI,
-		// 	path:     "/pools",
-		// 	method:   "GET",
-		// 	username: flags.username,
-		// 	password: flags.password,
-		// })
+		rootContainer, err := crateGeneralLayout(t)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error new container: %v\n", err)
+		}
 
 		buttons, err := newLayoutButtons(rootContainer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating buttons: %v\n", err)
 		}
 
+		poolDefaultStart, _, poolDefaultChannel, err := poolsDefaultPoller(flags)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
+		}
+		logsStart, _, logsChannel, err := logsPoller(flags)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
+		}
+
 		updateButtonsLayout(buttons, rootContainer)
+
+		go updateLogsLayout(ctx, t, rootContainer, logsChannel)
 
 		go updateNodesServiceCountLayout(ctx, t, rootContainer, poolDefaultChannel)
 
@@ -116,9 +83,19 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 
 		go poolDefaultStart()
 
+		go logsStart()
+
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
 		}
+
+		// poolsResp, err := request[Pools](ctx, Request{
+		// 	base:     flags.cbServerAPI,
+		// 	path:     "/pools",
+		// 	method:   "GET",
+		// 	username: flags.username,
+		// 	password: flags.password,
+		// })
 	}
 }
 
@@ -133,6 +110,52 @@ const (
 	// layoutSparkLines focuses onto the sparklines.
 	layoutXDCR
 )
+
+const rootContainerID = "root"
+const nodesSystemStatsContainerID = "nodesSystemStats"
+const nodesCountContainerID = "nodesCountContainerID"
+const layoutSpecificContainerID = "layoutSpecificContainerID"
+const layoutButtonsContainerID = "layoutButtonsContainerID"
+const logsContainerID = "logsContainerID"
+
+func crateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
+	rootContainer, err := container.New(t,
+		container.ID(rootContainerID),
+		container.SplitVertical(
+			container.Left(
+				container.SplitHorizontal(
+					container.Top(
+						container.Border(linestyle.Light),
+						container.BorderTitle("Press Q to quit"),
+					),
+					container.Bottom(
+						container.SplitHorizontal(
+							container.Top(container.ID(layoutButtonsContainerID)),
+							container.Bottom(container.ID(layoutSpecificContainerID)),
+							container.SplitPercent(20),
+						),
+					),
+					container.SplitPercent(30),
+				),
+			),
+			container.Right(
+				container.SplitHorizontal(
+					container.Top(container.ID(nodesCountContainerID)),
+					container.Bottom(
+						container.SplitHorizontal(
+							container.Top(container.ID(logsContainerID)),
+							container.Bottom(),
+							container.SplitPercent(99),
+						),
+					),
+					container.SplitPercent(30),
+				),
+			),
+			container.SplitPercent(70),
+		),
+	)
+	return rootContainer, err
+}
 
 // setLayout sets the specified layout.
 func setLayout(c *container.Container, lt layoutType) error {

@@ -21,7 +21,7 @@ func newNodesLayout(widget []*barchart.BarChart, poolsDefault PoolsDefault) ([]c
 	builder := grid.New()
 	length := len(poolsDefault.Nodes)
 	for i, node := range poolsDefault.Nodes {
-		leftRows[i] = grid.RowHeightPerc(100/length,
+		leftRows[i] = grid.RowHeightPerc(99/length,
 			grid.Widget(widget[i],
 				container.Border(linestyle.Light),
 				container.BorderTitle(node.Hostname),
