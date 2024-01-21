@@ -38,30 +38,43 @@ func newLogsWidget(ctx context.Context, logs Logs) (*text.Text, error) {
 	return wrapped, err
 }
 
-func updateLogsLayout(ctx context.Context, t *tcell.Terminal, c *container.Container, logsChannel <-chan Logs) {
-	for {
-		select {
-		case logs := <-logsChannel:
-			logsWidgets, err := newLogsWidget(ctx, logs)
+func updateLogsLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (logsChannel chan Logs) {
+	ch := make(chan Logs)
 
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
-			}
+	go func() {
+		for {
+			select {
+			case logs := <-ch:
+				logsWidgets, err := newLogsWidget(ctx, logs)
 
-			textOptions := []container.Option{
-				container.Border(linestyle.Light),
-				container.BorderTitle("Logs"),
-				container.PlaceWidget(logsWidgets),
-			}
-			if err := c.Update(logsContainerID, textOptions...); err != nil {
-				fmt.Fprintf(os.Stderr, "Error update: %v\n", err)
-			}
-		case <-ctx.Done():
-			return
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
+				}
 
-		case <-time.After(10 * time.Minute):
-			fmt.Println("No notifications received for 10 minutes. Exiting.")
-			return
+				textOptions := []container.Option{
+					container.Border(linestyle.Light),
+					container.BorderTitle("Logs"),
+					container.PlaceWidget(logsWidgets),
+					container.BorderTitleAlignRight(),
+				}
+
+				if err := c.Update(logsContainerID, textOptions...); err != nil {
+					fmt.Fprintf(os.Stderr, "Error update: %v\n", err)
+				}
+			case <-ctx.Done():
+				return
+
+			case <-time.After(10 * time.Minute):
+				fmt.Println("No notifications received for 10 minutes. Exiting.")
+				return
+			}
 		}
+	}()
+
+	//render straight away
+	ch <- Logs{
+		List: []Log{},
 	}
+
+	return ch
 }

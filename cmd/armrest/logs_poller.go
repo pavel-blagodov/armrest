@@ -21,17 +21,17 @@ type Logs struct {
 	List []Log `json:"list"`
 }
 
-func logsPoller(flags *rootFlags) (func(), func(), chan Logs, error) {
-	// Set up a channel to receive response
-	ch := make(chan Logs)
+func logsPoller(flags *rootFlags) (func(cs ...chan Logs), func(), error) {
 	var cancel context.CancelFunc
 
 	stop := func() {
-		cancel()
+		if cancel != nil {
+			cancel()
+		}
 	}
 
 	// Start a goroutine to handle long polling
-	start := func() {
+	start := func(cs ...chan Logs) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -51,7 +51,11 @@ func logsPoller(flags *rootFlags) (func(), func(), chan Logs, error) {
 			if err != nil {
 				return
 			}
-			ch <- resp
+			for _, c := range cs {
+				select {
+				case c <- resp:
+				}
+			}
 		}
 		ticker := time.NewTicker(5 * time.Second)
 		defer func() { ticker.Stop() }()
@@ -67,5 +71,5 @@ func logsPoller(flags *rootFlags) (func(), func(), chan Logs, error) {
 		}
 	}
 
-	return start, stop, ch, nil
+	return start, stop, nil
 }

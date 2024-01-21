@@ -73,38 +73,44 @@ func newNodesSystemsStatsWidgets(ctx context.Context, poolsDefault PoolsDefault)
 	return rv, nil
 }
 
-func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container, pdChannel <-chan PoolsDefault) {
-	for {
-		select {
-		case poolsDefault := <-pdChannel:
-			//nodes system stats
-			nodesSystemsStatsWidgets, err := newNodesSystemsStatsWidgets(ctx, poolsDefault)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
+func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (pdChannel chan PoolsDefault) {
+	ch := make(chan PoolsDefault)
+
+	go func() {
+		for {
+			select {
+			case poolsDefault := <-pdChannel:
+
+				nodesSystemsStatsWidgets, err := newNodesSystemsStatsWidgets(ctx, poolsDefault)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
+				}
+
+				gridOpts, err := newNodesLayout(nodesSystemsStatsWidgets, poolsDefault) // equivalent to contLayout(w)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error new layout: %v\n", err)
+				}
+
+				for i, node := range poolsDefault.Nodes {
+					values := []int{getCpuUsage(node), getRamUsage(node), getSwapUsage(node)}
+					nodesSystemsStatsWidgets[i].Values(values, 100)
+				}
+
+				if err := c.Update(layoutSpecificContainerID, gridOpts...); err != nil {
+					fmt.Fprintf(os.Stderr, "Error update: %v\n", err)
+				}
+
+			case <-ctx.Done():
+				return
+
+			case <-time.After(10 * time.Minute):
+				fmt.Println("No notifications received for 10 minutes. Exiting.")
+				return
 			}
-
-			gridOpts, err := newNodesLayout(nodesSystemsStatsWidgets, poolsDefault) // equivalent to contLayout(w)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error new layout: %v\n", err)
-			}
-
-			for i, node := range poolsDefault.Nodes {
-				values := []int{getCpuUsage(node), getRamUsage(node), getSwapUsage(node)}
-				nodesSystemsStatsWidgets[i].Values(values, 100)
-			}
-
-			if err := c.Update(layoutSpecificContainerID, gridOpts...); err != nil {
-				fmt.Fprintf(os.Stderr, "Error update: %v\n", err)
-			}
-
-		case <-ctx.Done():
-			return
-
-		case <-time.After(10 * time.Minute):
-			fmt.Println("No notifications received for 10 minutes. Exiting.")
-			return
 		}
-	}
+	}()
+
+	return ch
 }
 
 func getRamUsage(node Node) int {

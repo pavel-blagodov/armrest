@@ -64,26 +64,24 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Error creating buttons: %v\n", err)
 		}
 
-		poolDefaultStart, _, poolDefaultChannel, err := poolsDefaultPoller(flags)
+		poolDefaultStart, _, err := poolsDefaultPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
-		logsStart, _, logsChannel, err := logsPoller(flags)
+		logsStart, _, err := logsPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
 
 		updateButtonsLayout(buttons, rootContainer)
 
-		go updateLogsLayout(ctx, t, rootContainer, logsChannel)
+		logsCh := updateLogsLayout(ctx, t, rootContainer)
+		nodesCountCh := updateNodesServiceCountLayout(ctx, t, rootContainer)
+		nodesCh := updateNodesLayout(ctx, t, rootContainer)
 
-		go updateNodesServiceCountLayout(ctx, t, rootContainer, poolDefaultChannel)
+		go poolDefaultStart(nodesCountCh, nodesCh)
 
-		go updateNodesLayout(ctx, t, rootContainer, poolDefaultChannel)
-
-		go poolDefaultStart()
-
-		go logsStart()
+		go logsStart(logsCh)
 
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
@@ -141,13 +139,7 @@ func crateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 			container.Right(
 				container.SplitHorizontal(
 					container.Top(container.ID(nodesCountContainerID)),
-					container.Bottom(
-						container.SplitHorizontal(
-							container.Top(container.ID(logsContainerID)),
-							container.Bottom(),
-							container.SplitPercent(99),
-						),
-					),
+					container.Bottom(container.ID(logsContainerID)),
 					container.SplitPercent(30),
 				),
 			),

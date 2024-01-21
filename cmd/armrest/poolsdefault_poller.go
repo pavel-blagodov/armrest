@@ -5,17 +5,17 @@ import (
 	"net/url"
 )
 
-func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, error) {
-	// Set up a channel to receive response
-	ch := make(chan PoolsDefault, 1)
+func poolsDefaultPoller(flags *rootFlags) (func(cs ...chan PoolsDefault), func(), error) {
 	var cancel context.CancelFunc
 
 	stop := func() {
-		cancel()
+		if cancel != nil {
+			cancel()
+		}
 	}
 
 	// Start a goroutine to handle long polling
-	start := func() {
+	start := func(cs ...chan PoolsDefault) {
 		var etag string
 		for {
 			queryParams := url.Values{}
@@ -38,16 +38,16 @@ func poolsDefaultPoller(flags *rootFlags) (func(), func(), chan PoolsDefault, er
 				return
 			}
 
-			select {
-			// Prepare next request
-			case ch <- resp:
-				etag = resp.Etag
-			// Stop loop and request
-			case <-ctx.Done():
-				return
+			for _, c := range cs {
+				select {
+				case c <- resp:
+				case <-ctx.Done():
+					return
+				}
 			}
+			etag = resp.Etag
 		}
 	}
 
-	return start, stop, ch, nil
+	return start, stop, nil
 }
