@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pavel-blagodov/armrest/cmd/armrest/app"
+	app "github.com/pavel-blagodov/armrest/cmd/armrest"
 )
 
 func main() {

@@ -1,6 +1,6 @@
-package app
+package utils
 
-func trimString(input string, length int, postfix string) string {
+func TrimString(input string, length int, postfix string) string {
 	switch {
 	case length <= 0:
 		return ""

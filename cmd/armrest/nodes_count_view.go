@@ -11,6 +11,8 @@ import (
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgets/text"
+
+	"github.com/pavel-blagodov/armrest/cmd/utils"
 )
 
 func newNodesServiceCountWidget(ctx context.Context, poolsDefault PoolsDefault) (*text.Text, error) {
@@ -24,15 +26,15 @@ func newNodesServiceCountWidget(ctx context.Context, poolsDefault PoolsDefault) 
 	if err := wrapped.Write(serverIcon, text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
 		return nil, err
 	}
-	failedOver := filter[Node](poolsDefault.Nodes, func(node Node) bool {
+	failedOver := utils.Filter[Node](poolsDefault.Nodes, func(node Node) bool {
 		return node.ClusterMembership == "inactiveFailed"
 	})
-	onlyActive := filter[Node](poolsDefault.Nodes, func(node Node) bool {
+	onlyActive := utils.Filter[Node](poolsDefault.Nodes, func(node Node) bool {
 		return node.ClusterMembership == "active"
 	})
 	active := append(failedOver, onlyActive...)
 
-	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(active), "active", pluralize(len(active), "node", "nodes"), "\n")); err != nil {
+	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(active), "active", utils.Pluralize(len(active), "node", "nodes"), "\n")); err != nil {
 		return nil, err
 	}
 
@@ -40,29 +42,29 @@ func newNodesServiceCountWidget(ctx context.Context, poolsDefault PoolsDefault) 
 	if err := wrapped.Write(serverIcon, text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		return nil, err
 	}
-	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(failedOver), "failed-over", pluralize(len(failedOver), "node", "nodes"), "\n")); err != nil {
+	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(failedOver), "failed-over", utils.Pluralize(len(failedOver), "node", "nodes"), "\n")); err != nil {
 		return nil, err
 	}
 
 	//pending
-	pending := filter[Node](poolsDefault.Nodes, func(node Node) bool {
+	pending := utils.Filter[Node](poolsDefault.Nodes, func(node Node) bool {
 		return node.ClusterMembership != "active"
 	})
 	if err := wrapped.Write(serverIcon, text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		return nil, err
 	}
-	if err := wrapped.Write(fmt.Sprintf(" %d %s %s", len(pending), pluralize(len(pending), "node", "nodes"), "pending rebalance\n")); err != nil {
+	if err := wrapped.Write(fmt.Sprintf(" %d %s %s", len(pending), utils.Pluralize(len(pending), "node", "nodes"), "pending rebalance\n")); err != nil {
 		return nil, err
 	}
 
 	//down
-	down := filter[Node](poolsDefault.Nodes, func(node Node) bool {
+	down := utils.Filter[Node](poolsDefault.Nodes, func(node Node) bool {
 		return node.Status != "healthy"
 	})
 	if err := wrapped.Write(serverIcon, text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 		return nil, err
 	}
-	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(down), "inactive", pluralize(len(down), "node", "nodes"), "\n")); err != nil {
+	if err := wrapped.Write(fmt.Sprintf(" %d %s %s%s", len(down), "inactive", utils.Pluralize(len(down), "node", "nodes"), "\n")); err != nil {
 		return nil, err
 	}
 

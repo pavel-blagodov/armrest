@@ -11,6 +11,8 @@ import (
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/tcell"
 	"github.com/mum4k/termdash/widgets/text"
+
+	"github.com/pavel-blagodov/armrest/cmd/utils"
 )
 
 func newLogsWidget(ctx context.Context, logs Logs) (*text.Text, error) {
@@ -19,7 +21,6 @@ func newLogsWidget(ctx context.Context, logs Logs) (*text.Text, error) {
 
 	for i := range logs.List {
 		log := logs.List[i]
-		// icon := "\u2620"
 		parsedTime, err := time.Parse(time.RFC3339Nano, log.ServerTime)
 		if err != nil {
 			fmt.Println("Error parsing timestamp:", err)
@@ -29,7 +30,7 @@ func newLogsWidget(ctx context.Context, logs Logs) (*text.Text, error) {
 			return nil, err
 		}
 
-		if err := wrapped.Write(trimString(log.Text, 200, "...") + "\n\n"); err != nil {
+		if err := wrapped.Write(utils.TrimString(log.Text, 200, "...") + "\n\n"); err != nil {
 			return nil, err
 		}
 	}
