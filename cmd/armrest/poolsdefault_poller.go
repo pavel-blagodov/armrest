@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func poolsDefaultPoller(flags *rootFlags) (func(cs ...chan PoolsDefault), func(), error) {
+func PoolsDefaultPoller(flags *rootFlags) (func(cs ...chan PoolsDefault), func(), error) {
 	var cancel context.CancelFunc
 
 	stop := func() {

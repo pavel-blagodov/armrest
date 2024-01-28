@@ -21,7 +21,7 @@ type Logs struct {
 	List []Log `json:"list"`
 }
 
-func logsPoller(flags *rootFlags) (func(cs ...chan Logs), func(), error) {
+func LogsPoller(flags *rootFlags) (func(cs ...chan Logs), func(), error) {
 	var cancel context.CancelFunc
 
 	stop := func() {

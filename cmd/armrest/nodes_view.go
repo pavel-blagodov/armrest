@@ -73,7 +73,7 @@ func newNodesSystemsStatsWidgets(ctx context.Context, poolsDefault PoolsDefault)
 	return rv, nil
 }
 
-func updateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (pdChannel chan PoolsDefault) {
+func UpdateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (pdChannel chan PoolsDefault) {
 	ch := make(chan PoolsDefault)
 
 	go func() {

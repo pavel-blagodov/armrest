@@ -64,7 +64,7 @@ func newNodesServiceCountWidget(ctx context.Context, poolsDefault PoolsDefault) 
 	return wrapped, nil
 }
 
-func updateNodesServiceCountLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (pdChannel chan PoolsDefault) {
+func UpdateNodesServiceCountLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (pdChannel chan PoolsDefault) {
 	ch := make(chan PoolsDefault)
 
 	go func() {

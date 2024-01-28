@@ -54,34 +54,37 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		rootContainer, err := crateGeneralLayout(t)
+		rootContainer, err := CrateGeneralLayout(t)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error new container: %v\n", err)
 		}
 
-		buttons, err := newLayoutButtons(rootContainer)
+		buttons, err := NewLayoutButtons(rootContainer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating buttons: %v\n", err)
 		}
 
-		poolDefaultStart, _, err := poolsDefaultPoller(flags)
+		poolDefaultStart, _, err := PoolsDefaultPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
-		logsStart, _, err := logsPoller(flags)
+		logsStart, _, err := LogsPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
 
-		updateButtonsLayout(buttons, rootContainer)
+		UpdateButtonsLayout(buttons, rootContainer)
 
-		logsCh := updateLogsLayout(ctx, t, rootContainer)
-		nodesCountCh := updateNodesServiceCountLayout(ctx, t, rootContainer)
-		nodesCh := updateNodesLayout(ctx, t, rootContainer)
+		logsCh := UpdateLogsLayout(ctx, t, rootContainer)
+		nodesCountCh := UpdateNodesServiceCountLayout(ctx, t, rootContainer)
+		nodesCh := UpdateNodesLayout(ctx, t, rootContainer)
+		taskStart, _, tasksCh, err := TasksPoller(flags)
 
-		go poolDefaultStart(nodesCountCh, nodesCh)
+		go poolDefaultStart(nodesCountCh, nodesCh, tasksCh)
 
 		go logsStart(logsCh)
+
+		go taskStart()
 
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
@@ -116,7 +119,7 @@ const layoutSpecificContainerID = "layoutSpecificContainerID"
 const layoutButtonsContainerID = "layoutButtonsContainerID"
 const logsContainerID = "logsContainerID"
 
-func crateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
+func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 	rootContainer, err := container.New(t,
 		container.ID(rootContainerID),
 		container.SplitVertical(
@@ -166,7 +169,7 @@ type layoutButtons struct {
 	xdcrB    *button.Button
 }
 
-func updateButtonsLayout(buttons *layoutButtons, c *container.Container) error {
+func UpdateButtonsLayout(buttons *layoutButtons, c *container.Container) error {
 	builder := grid.New()
 	builder.Add(grid.RowHeightPerc(5,
 		grid.ColWidthPerc(33,
@@ -190,7 +193,7 @@ func updateButtonsLayout(buttons *layoutButtons, c *container.Container) error {
 }
 
 // newLayoutButtons returns buttons that dynamically switch the layouts.
-func newLayoutButtons(c *container.Container) (*layoutButtons, error) {
+func NewLayoutButtons(c *container.Container) (*layoutButtons, error) {
 	opts := []button.Option{
 		button.WidthFor("Servers"),
 		button.FillColor(cell.ColorNumber(220)),

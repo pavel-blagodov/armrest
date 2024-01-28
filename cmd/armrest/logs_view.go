@@ -38,7 +38,7 @@ func newLogsWidget(ctx context.Context, logs Logs) (*text.Text, error) {
 	return wrapped, err
 }
 
-func updateLogsLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (logsChannel chan Logs) {
+func UpdateLogsLayout(ctx context.Context, t *tcell.Terminal, c *container.Container) (logsChannel chan Logs) {
 	ch := make(chan Logs)
 
 	go func() {
