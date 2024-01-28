@@ -2,7 +2,9 @@ package app
 
 import "time"
 
-type TasksResponse []struct {
+type TasksResponse []TasksItem
+
+type TasksItem struct {
 	StatusID                 string           `json:"statusId"`
 	Type                     string           `json:"type"`
 	Subtype                  string           `json:"subtype"`

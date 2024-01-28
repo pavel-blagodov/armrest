@@ -78,13 +78,15 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 		logsCh := UpdateLogsLayout(ctx, t, rootContainer)
 		nodesCountCh := UpdateNodesServiceCountLayout(ctx, t, rootContainer)
 		nodesCh := UpdateNodesLayout(ctx, t, rootContainer)
-		taskStart, _, tasksCh, err := TasksPoller(flags)
+		tasksCh1 := UpdateRebalanceLayout(ctx, t, rootContainer)
 
-		go poolDefaultStart(nodesCountCh, nodesCh, tasksCh)
+		taskStart, _, tasksCh, err := TasksPoller(flags)
 
 		go logsStart(logsCh)
 
-		go taskStart()
+		go taskStart(tasksCh1)
+
+		go poolDefaultStart(nodesCountCh, nodesCh, tasksCh)
 
 		if err := termdash.Run(ctx, t, rootContainer, termdash.KeyboardSubscriber(quitter)); err != nil {
 			fmt.Fprintf(os.Stderr, "Error termdash.Run: %v\n", err)
@@ -118,6 +120,7 @@ const nodesCountContainerID = "nodesCountContainerID"
 const layoutSpecificContainerID = "layoutSpecificContainerID"
 const layoutButtonsContainerID = "layoutButtonsContainerID"
 const logsContainerID = "logsContainerID"
+const rebalanceContainerID = "rebalanceContainerID"
 
 func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 	rootContainer, err := container.New(t,
@@ -126,6 +129,11 @@ func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 			container.Left(
 				container.SplitHorizontal(
 					container.Top(
+						container.SplitVertical(
+							container.Left(container.ID(rebalanceContainerID)),
+							container.Right(),
+							container.SplitPercent(30),
+						),
 						container.Border(linestyle.Light),
 						container.BorderTitle("Press Q to quit"),
 					),
