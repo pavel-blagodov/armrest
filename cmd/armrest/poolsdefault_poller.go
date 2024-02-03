@@ -25,8 +25,7 @@ func PoolsDefaultPoller(flags *rootFlags) (func(cs ...chan PoolsDefault), func()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			resp, err := request[PoolsDefault](ctx, Request{
-				method:   "GET",
+			resp, err := get[PoolsDefault](ctx, Request{
 				base:     flags.cbServerAPI,
 				path:     "/pools/default",
 				query:    queryParams,

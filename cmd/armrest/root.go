@@ -68,10 +68,23 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
+
 		logsStart, _, err := LogsPoller(flags)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
+
+		// RangePoller(flags, []RangeRequest{{
+		// 	Step:       10,
+		// 	TimeWindow: "1d",
+		// 	Start:      -1,
+		// 	Metric: []RangeRequestMetric{
+		// 		{Label: "name", Value: "kv_ops"},
+		// 	},
+		// 	NodesAggregation: "sum",
+		// 	ApplyFunctions:   []string{"irate", "sum"},
+		// 	AlignTimestamps:  true,
+		// }})
 
 		UpdateButtonsLayout(buttons, rootContainer)
 

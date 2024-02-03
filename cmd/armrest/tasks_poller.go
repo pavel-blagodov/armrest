@@ -43,8 +43,7 @@ func TasksPoller(flags *rootFlags) (func(cs ...chan TasksResponse), func(), chan
 
 		doPoll := func() {
 
-			resp, err := request[TasksResponse](ctx, Request{
-				method:   "GET",
+			resp, err := get[TasksResponse](ctx, Request{
 				base:     flags.cbServerAPI,
 				path:     "/pools/default/tasks",
 				username: flags.username,

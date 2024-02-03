@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,7 +21,17 @@ type Request struct {
 	query    url.Values
 }
 
-func request[T any](ctx context.Context, request Request) (T, error) {
+func post[T, K any](ctx context.Context, request1 Request, payload K) (T, error) {
+	request1.method = "POST"
+	return request[T, K](ctx, request1, payload)
+}
+
+func get[T any](ctx context.Context, request1 Request) (T, error) {
+	request1.method = "GET"
+	return request[T, any](ctx, request1, nil)
+}
+
+func request[T, K any](ctx context.Context, request Request, payload K) (T, error) {
 	var rv T
 	client := http.Client{}
 	u, err := url.Parse(request.base)
@@ -38,10 +49,17 @@ func request[T any](ctx context.Context, request Request) (T, error) {
 		u.RawQuery = q.Encode()
 	}
 
+	// Marshal the payload to JSON.
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return rv, err
+	}
+
 	u.Path = request.path
 
 	// Define request
-	req, err := http.NewRequestWithContext(ctx, request.method, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, request.method, u.String(), bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating long-polling request: %v\n", err)
 		return rv, err

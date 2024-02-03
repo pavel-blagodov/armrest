@@ -39,8 +39,7 @@ func LogsPoller(flags *rootFlags) (func(cs ...chan Logs), func(), error) {
 			queryParams := url.Values{}
 			queryParams.Add("limit", "100")
 
-			resp, err := request[Logs](ctx, Request{
-				method:   "GET",
+			resp, err := get[Logs](ctx, Request{
 				base:     flags.cbServerAPI,
 				path:     "/logs",
 				query:    queryParams,
