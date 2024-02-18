@@ -148,7 +148,7 @@ func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 							container.Right(
 								container.ID(kvOpsContainerID),
 								container.Border(linestyle.Light),
-								container.BorderTitle("Total ops/s")),
+								container.BorderTitle("Total Ops/Sec")),
 							container.SplitPercent(30),
 						),
 					),

@@ -15,6 +15,23 @@ import (
 	"github.com/mum4k/termdash/widgets/barchart"
 )
 
+func clearLayout() ([]container.Option, error) {
+	builder := grid.New()
+	leftRows := make([]grid.Element, 1)
+	leftRows[0] = grid.RowHeightPerc(99,
+		grid.Widget(nil,
+			container.Border(linestyle.None),
+			container.BorderTitle(""),
+			container.BorderTitleAlignRight(),
+		))
+	builder.Add(grid.ColWidthPerc(99, leftRows...))
+	gridOpts, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+	return gridOpts, nil
+}
+
 func newNodesLayout(widget []*barchart.BarChart, poolsDefault PoolsDefault) ([]container.Option, error) {
 	leftRows := make([]grid.Element, len(poolsDefault.Nodes))
 
@@ -84,6 +101,15 @@ func UpdateNodesLayout(ctx context.Context, t *tcell.Terminal, c *container.Cont
 				nodesSystemsStatsWidgets, err := newNodesSystemsStatsWidgets(ctx, poolsDefault)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
+				}
+
+				clearGridOpts, err := clearLayout() // equivalent to contLayout(w)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error new layout: %v\n", err)
+				}
+
+				if err := c.Update(layoutSpecificContainerID, clearGridOpts...); err != nil {
+					fmt.Fprintf(os.Stderr, "Error update: %v\n", err)
 				}
 
 				gridOpts, err := newNodesLayout(nodesSystemsStatsWidgets, poolsDefault) // equivalent to contLayout(w)
