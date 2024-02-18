@@ -10,28 +10,28 @@ type RangeResponse []struct {
 		Metric struct {
 			Nodes []string `json:"nodes"`
 		} `json:"metric"`
-		Values [][]interface{} `json:"values"`
+		Values [][]any `json:"values"`
 	} `json:"data"`
 	Errors         []interface{} `json:"errors"`
 	StartTimestamp int           `json:"startTimestamp"`
 	EndTimestamp   int           `json:"endTimestamp"`
 }
 
-type RangeRequest struct {
-	Step             int                  `json:"step"`
-	TimeWindow       string               `json:"timeWindow"`
-	Start            int                  `json:"start"`
-	Metric           []RangeRequestMetric `json:"metric"`
-	NodesAggregation string               `json:"nodesAggregation"`
-	ApplyFunctions   []string             `json:"applyFunctions,omitempty"`
-	AlignTimestamps  bool                 `json:"alignTimestamps"`
-}
-type RangeRequestMetric struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
+// type RangeRequest struct {
+// 	Step             int                  `json:"step"`
+// 	TimeWindow       string               `json:"timeWindow"`
+// 	Start            int                  `json:"start"`
+// 	Metric           []RangeRequestMetric `json:"metric"`
+// 	NodesAggregation string               `json:"nodesAggregation"`
+// 	ApplyFunctions   []string             `json:"applyFunctions,omitempty"`
+// 	AlignTimestamps  bool                 `json:"alignTimestamps"`
+// }
+// type RangeRequestMetric struct {
+// 	Label string `json:"label"`
+// 	Value string `json:"value"`
+// }
 
-func RangePoller(flags *rootFlags, payload []RangeRequest) (func(cs ...chan RangeResponse), func(), error) {
+func RangePoller(flags *rootFlags, payload []byte) (func(cs ...chan RangeResponse), func(), error) {
 	var cancel context.CancelFunc
 
 	stop := func() {
@@ -47,7 +47,7 @@ func RangePoller(flags *rootFlags, payload []RangeRequest) (func(cs ...chan Rang
 
 		doPoll := func() {
 
-			resp, err := post[RangeResponse, []RangeRequest](ctx, Request{
+			resp, err := post[RangeResponse](ctx, Request{
 				base:     flags.cbServerAPI,
 				path:     "/pools/default/stats/range/",
 				username: flags.username,

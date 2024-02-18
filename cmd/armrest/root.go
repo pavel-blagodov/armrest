@@ -74,26 +74,23 @@ func rootCmd(flags *rootFlags) func(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Error performing authenticated long-polling: %v\n", err)
 		}
 
-		// RangePoller(flags, []RangeRequest{{
-		// 	Step:       10,
-		// 	TimeWindow: "1d",
-		// 	Start:      -1,
-		// 	Metric: []RangeRequestMetric{
-		// 		{Label: "name", Value: "kv_ops"},
-		// 	},
-		// 	NodesAggregation: "sum",
-		// 	ApplyFunctions:   []string{"irate", "sum"},
-		// 	AlignTimestamps:  true,
-		// }})
+		rangeStart, _, err := RangePoller(flags, []byte(`[{"step":36,"timeWindow":360,"start":-3600,"metric":[{"label":"name","value":"kv_ops"},{"label":"bucket","value":"travel-sample"}],"nodesAggregation":"sum","applyFunctions":["irate","sum"],"alignTimestamps":true}]`))
 
 		UpdateButtonsLayout(buttons, rootContainer)
 
 		logsCh := UpdateLogsLayout(ctx, t, rootContainer)
+
 		nodesCountCh := UpdateNodesServiceCountLayout(ctx, t, rootContainer)
+
 		nodesCh := UpdateNodesLayout(ctx, t, rootContainer)
+
 		tasksCh1 := UpdateRebalanceLayout(ctx, t, rootContainer)
 
 		taskStart, _, tasksCh, err := TasksPoller(flags)
+
+		kvOpsCh := UpdateKvOpsLayout(ctx, t, rootContainer)
+
+		go rangeStart(kvOpsCh)
 
 		go logsStart(logsCh)
 
@@ -134,6 +131,7 @@ const layoutSpecificContainerID = "layoutSpecificContainerID"
 const layoutButtonsContainerID = "layoutButtonsContainerID"
 const logsContainerID = "logsContainerID"
 const rebalanceContainerID = "rebalanceContainerID"
+const kvOpsContainerID = "kvOpsContainerID"
 
 func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 	rootContainer, err := container.New(t,
@@ -143,12 +141,16 @@ func CrateGeneralLayout(t *tcell.Terminal) (*container.Container, error) {
 				container.SplitHorizontal(
 					container.Top(
 						container.SplitVertical(
-							container.Left(container.ID(rebalanceContainerID)),
-							container.Right(),
+							container.Left(
+								container.ID(rebalanceContainerID),
+								container.Border(linestyle.Light),
+								container.BorderTitle("Press Q to quit")),
+							container.Right(
+								container.ID(kvOpsContainerID),
+								container.Border(linestyle.Light),
+								container.BorderTitle("Total ops/s")),
 							container.SplitPercent(30),
 						),
-						container.Border(linestyle.Light),
-						container.BorderTitle("Press Q to quit"),
 					),
 					container.Bottom(
 						container.SplitHorizontal(

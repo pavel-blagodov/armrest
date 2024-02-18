@@ -21,17 +21,17 @@ type Request struct {
 	query    url.Values
 }
 
-func post[T, K any](ctx context.Context, request1 Request, payload K) (T, error) {
+func post[T any](ctx context.Context, request1 Request, payload []byte) (T, error) {
 	request1.method = "POST"
-	return request[T, K](ctx, request1, payload)
+	return request[T](ctx, request1, payload)
 }
 
 func get[T any](ctx context.Context, request1 Request) (T, error) {
 	request1.method = "GET"
-	return request[T, any](ctx, request1, nil)
+	return request[T](ctx, request1, nil)
 }
 
-func request[T, K any](ctx context.Context, request Request, payload K) (T, error) {
+func request[T any](ctx context.Context, request Request, payload []byte) (T, error) {
 	var rv T
 	client := http.Client{}
 	u, err := url.Parse(request.base)
@@ -49,22 +49,19 @@ func request[T, K any](ctx context.Context, request Request, payload K) (T, erro
 		u.RawQuery = q.Encode()
 	}
 
-	// Marshal the payload to JSON.
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		return rv, err
-	}
-
 	u.Path = request.path
 
 	// Define request
-	req, err := http.NewRequestWithContext(ctx, request.method, u.String(), bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, request.method, u.String(), bytes.NewBuffer(payload))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating long-polling request: %v\n", err)
 		return rv, err
 	}
 	req.SetBasicAuth(request.username, request.password)
+
+	if request.method == "POST" {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	// Make request
 	resp, err := client.Do(req)

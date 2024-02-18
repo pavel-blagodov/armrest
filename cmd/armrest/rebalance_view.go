@@ -13,7 +13,7 @@ import (
 	"github.com/pavel-blagodov/armrest/cmd/utils"
 )
 
-func RebalanceWdiget(progress int) (*donut.Donut, error) {
+func RebalanceWidget(progress int) (*donut.Donut, error) {
 	var color cell.Color
 	if progress > 0 {
 		color = cell.ColorRed
@@ -43,7 +43,7 @@ func UpdateRebalanceLayout(ctx context.Context, t *tcell.Terminal, c *container.
 					return task.Type == "rebalance"
 				})
 
-				widget, err := RebalanceWdiget(int(rebalanceTask.Progress))
+				widget, err := RebalanceWidget(int(rebalanceTask.Progress))
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error new widget: %v\n", err)
 				}
